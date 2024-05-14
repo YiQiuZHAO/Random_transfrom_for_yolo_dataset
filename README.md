@@ -54,20 +54,20 @@ tools：功能函数
   ```
     
   输出组织：
-    ```savepath:
-      dataset：
-        train：#训练集
-          images:
-          labels:
-        val：#验证集
-          images:
-          labels:
-        test：#测试集
-          images:
-          labels:
-        data.yaml #yolo数据集文件
-        train.txt #训练集文件名
-        val.txt #验证集文件名
-        test.txt #测试集文件名
-    ```
+  ```savepath:
+    dataset：
+      train：#训练集
+        images:
+        labels:
+      val：#验证集
+        images:
+        labels:
+      test：#测试集
+        images:
+        labels:
+      data.yaml #yolo数据集文件
+      train.txt #训练集文件名
+      val.txt #验证集文件名
+      test.txt #测试集文件名
+  ```
   
