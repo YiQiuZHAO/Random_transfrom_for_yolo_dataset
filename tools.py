@@ -1,12 +1,9 @@
-import random
-from glob import glob
-import cv2
 import os.path
 from glob import glob
 import cv2
 import numpy as np
-import random
-from math import e, radians, cos, sin
+from math import radians
+from pathlib import Path
 
 
 def get_ellipse_param(major_radius, minor_radius, angle):
@@ -34,12 +31,22 @@ def read_lines(line: str):
 def read_(filepath, task):
     rootpath, filename = os.path.split(filepath)
     name, ext = os.path.splitext(filename)
-    imgfile = '/'.join([rootpath, name + ext])
-    txtfile = filepath.replace(ext,'.txt')
+    parent_path = Path(rootpath).parent
+
+    txtfile = filepath.replace(ext, '.txt')
+
     if os.path.exists(txtfile):
         # img = cv2.imdecode(np.fromfile(filepath, dtype=np.uint16), 1)
-        img = cv2.imread(filepath,cv2.IMREAD_UNCHANGED)
+        img = cv2.imread(filepath, cv2.IMREAD_UNCHANGED)
         labels = open(txtfile, 'r').readlines().copy()
+        if task == 'detect':
+            labels = np.asarray(list(map(read_lines, labels)))
+        elif task == 'segment':
+            labels = list(map(read_lines, labels))
+        return img, labels, name
+    elif os.path.exists('\\'.join([str(parent_path), 'labels', name + '.txt'])):
+        img = cv2.imread(filepath, cv2.IMREAD_UNCHANGED)
+        labels = open('\\'.join([str(parent_path), 'labels', name + '.txt']), 'r').readlines().copy()
         if task == 'detect':
             labels = np.asarray(list(map(read_lines, labels)))
         elif task == 'segment':
@@ -49,23 +56,11 @@ def read_(filepath, task):
         return None, None, None
 
 
-# def read_seg(filepath):
-#     rootpath, filename = os.path.split(filepath)
-#     name, ext = os.path.splitext(filename)
-#     imgfile = '/'.join([rootpath, name + ext])
-#     txtfile = '/'.join([os.path.abspath(os.path.join(rootpath, '..')), 'labels', name + '.txt'])
-#     if os.path.exists(txtfile):
-#         img = cv2.imdecode(np.fromfile(imgfile, dtype=np.uint8), 1)
-#         labels = open(txtfile, 'r').readlines().copy()
-#         labels = list(map(lambda a: np.asarray(list(map(eval, a[:-1].split(' ')))), labels))
-#         return img, labels, name
-#     else:
-#         return None, None, None
-
 def write_lines_seg(line):
+    # 限制轮廓小于200个点
     dots = line[1:].reshape(-1, 2)
-    if len(line) >= 100:
-        step = len(line) // 100
+    if len(line) >= 200:
+        step = len(line) // 200
         dots = dots[::step]
         # line[1:] = dots.reshape(1,-1)
     return np.insert(dots.reshape(1, -1), 0, line[0])
@@ -90,10 +85,6 @@ def write_(img, labels, savepath, name, m=None, task='detect'):
         lines = []
         f = open(labelfile, 'w')
         for line in labels:
-            # if len(line) > 1000:
-            #     line = line[1::4]
-            # if len(line) > 500:
-            #     line = line[1::2]
             if task == 'detect':
                 l = ' '.join([str(int(line[0]))] + str(line[1:])[1:-1].replace('\n', '').split()) + '\n'
             elif task == 'segment':
@@ -176,9 +167,7 @@ def box2labels(labels, x=1, y=1, task='detect'):
             # l[2::2] = l[2::2] / y
             dots[0] /= x
             dots[1] /= y
-
             labels[i] = np.insert(dots.reshape(1, -1), 0, l[0])
-
         return labels
 
 
@@ -204,33 +193,22 @@ def check_labels(labels, ll=0, rl=1, tl=0, bl=1, task='detect', x=1, y=1):
                     result.append(box)
         return np.asarray(result)
     elif task == 'segment':
-        # ll *= x
-        # rl *= x
-        # tl *= y
-        # bl *= y
         lp = int(ll * x)
         rp = int(rl * x)
         tp = int(tl * y)
         bp = int(bl * y)
         r = []
         for i, l in enumerate(labels):
-            # dots = l[1:].reshape(-1, 2)
             temp = np.zeros((y, x)).astype('uint8')
-            # lr = []
-            # print(len(l))
             if len(l[1:]) > 0:
                 dots = l[1:].reshape(-1, 1, 2)
-                # print(dots)
                 dots[:, :, 0] *= x
                 dots[:, :, 1] *= y
                 temp = cv2.drawContours(temp, [dots.astype(int)], -1, 255, -1)
-                # show_imgs(temp)
-
                 temp[:tp] = 0
                 temp[:, :lp] = 0
                 temp[:, rp:] = 0
                 temp[bp:] = 0
-
                 c, t = cv2.findContours(temp, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
                 if len(c) > 0:
@@ -244,7 +222,6 @@ def check_labels(labels, ll=0, rl=1, tl=0, bl=1, task='detect', x=1, y=1):
                         # ds[1::2] /= y
                         l = np.insert(ds, 0, l[0])
                         r.append(l)
-
         return r
 
 
