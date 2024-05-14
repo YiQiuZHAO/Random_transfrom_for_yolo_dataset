@@ -305,29 +305,6 @@ def warp_img(img, labels, anglex=0, angley=0, fov=42, task='detect'):
                         r.append(l)
         return img, r
 
-
-# def warp_img_seg(img, labels, anglex=0, angley=0, fov=42):
-#     y, x = img.shape[0:2]
-#     center = (int(x / 2), int(y / 2))
-#     org = np.array([[0, 0],
-#                     [y, 0],
-#                     [0, x],
-#                     [y, x]], np.float32)
-#     dst = warp_points(org, center, anglex, angley, fov, x, y)[:, :2].astype(np.float32)
-#     warpR = cv2.getPerspectiveTransform(org, dst)
-#     img = cv2.warpPerspective(img, warpR, (x, y))
-#
-#     labels = label2box_seg(labels, x, y)
-#     for i, l in enumerate(labels):
-#         dots = l[1:].reshape(-1, 2)
-#         dots = warp_points(dots, center, anglex, angley, fov, x, y)
-#         l[1:] = dots.reshape(1, -1)
-#         labels[i] = l
-#     labels = box2labels_seg(labels, x, y)
-#
-#     return img, check_labels(labels)
-
-
 def show_imgs(imgs=None, names=[], key=0, des=True):
     if type(imgs) == list:
         for i, img in enumerate(imgs):
@@ -346,17 +323,10 @@ def show_imgs(imgs=None, names=[], key=0, des=True):
         cv2.destroyAllWindows()
 
 
-# colors = [0]*80
-# for i in range(len(colors)):
-#     colors[i] = str((random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)))+'\n'
-# f = open('colors.txt','w')
-# f.writelines(colors)
-# f.close()
 f = open('colors.txt', 'r')
 colors = f.readlines()
 f.close()
 colors = list(map(lambda n: eval(n[:-1]), colors))
-
 
 def draw_labels(img, labels, task='detect'):
     global colors
@@ -384,17 +354,6 @@ def draw_labels(img, labels, task='detect'):
                 img = cv2.drawContours(img, [dots], -1, colors[int(l[0])], 3)
     return img
 
-
-# def draw_labels_seg(img, labels):
-#     if len(labels) > 0:
-#         y, x = img.shape[:2]
-#         labels = label2box_seg(labels, x, y)
-#         for i, l in enumerate(labels):
-#             dots = l[1:].reshape(-1, 2)
-#             img = cv2.drawContours(img, dots, -1, (0, 255, 0), 3)
-#     return img
-
-
 def stats_labels(path: str):
     files = glob(path + '/*.txt')
     labels = []
@@ -412,7 +371,6 @@ def stats_labels(path: str):
         f.close()
     print(labels)
     return labels
-
 
 def stats_only_label(path: str, label=None):
     files = glob(path + '/*.txt')
