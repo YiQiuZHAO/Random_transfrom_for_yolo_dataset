@@ -115,7 +115,7 @@ def labelme2yolo(labelme_label_dir, cls2id, save_dir='res/'):
     print('Completed!')
 
 
-def yolo2labelmeseg(yolo_image_dir, yolo_label_dir, save_dir, id2cls):
+def yolo2labelmeseg(yolo_image_dir, save_dir, id2cls):
     # filelist =glob(yolo_label_dir+'/*.txt')
     imglist = glob(yolo_image_dir + '/*.jpg')
     save_dir = str(Path(save_dir)) + '/'
@@ -161,6 +161,35 @@ def yolo2labelmeseg(yolo_image_dir, yolo_label_dir, save_dir, id2cls):
         continue
 
 
+def labelme2yolov2Seg(labelme_label_path:str= "", save_path:str= "", classList:list=[]):
+
+    if(not os.path.exists(save_path)):
+        os.mkdir(save_path)
+
+    jsonfileList = glob(os.path.join(labelme_label_path, "*.json"))
+    print(jsonfileList)  # 打印文件夹下的文件名称
+
+    for jsonfile in jsonfileList:
+        with open(jsonfile, "r") as f:
+            file_in = json.load(f)
+
+            shapes = file_in["shapes"]
+
+            with open(save_path + "\\" + jsonfile.split("\\")[-1].replace(".json", ".txt"), "w") as file_handle:
+                for shape in shapes:
+                    file_handle.writelines(str(classList.index(shape["label"])) + " ")
+                    print(classList.index(shape["label"]))
+
+                    for point in shape["points"]:
+                        x = point[0]/file_in["imageWidth"]  # mask轮廓中一点的X坐标
+                        y = point[1]/file_in["imageHeight"]  # mask轮廓中一点的Y坐标
+                        file_handle.writelines(str(x) + " " + str(y) + " ")  # 写入mask轮廓点
+
+                    file_handle.writelines("\n")
+            file_handle.close()
+        f.close()
+
+
 if __name__ == '__main__':
     id2cls = {0: '0'}
     cls2id = {'0': 0}
@@ -174,4 +203,4 @@ if __name__ == '__main__':
     # yolo_label_dir = r'E:\00_data\01_fushi_435\data\labels'
     # save_dir = r'E:\00_data\01_fushi_435\data\images'
     # yolo2labelmeseg(root_dir, root_dir, save_dir, id2cls)
-    labelme2yolo
+
